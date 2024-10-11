@@ -1,22 +1,26 @@
-# workspace-image-analysis-app
-🏢 A Streamlit web application that analyzes workspace images. It uses YOLOv5 for object detection, MediaPipe for pose estimation, and transformer models for image captioning and visual question answering. Users can upload workspace images to receive insights on object counts, back support status, and estimated distances to screens.
+# Workspace Image Analysis App
 
-<img width="1440" alt="Screenshot 2024-10-12 at 12 18 15 AM" src="https://github.com/user-attachments/assets/032930e9-e6d4-43e3-8ffc-a33e04c40c31">
+🏢 A Streamlit web application designed to analyze workspace images. This application leverages advanced computer vision techniques, utilizing YOLOv5 for object detection, MediaPipe for pose estimation, and transformer models for image captioning and visual question answering. Users can upload images of their workspaces to receive valuable insights on object counts, back support status, and estimated distances to screens.
+
+![Workspace Image Analysis Screenshot](https://github.com/user-attachments/assets/032930e9-e6d4-43e3-8ffc-a33e04c40c31)
 
 ## Overview
 
-This application utilizes advanced computer vision techniques and deep learning models to evaluate images of workspaces. It detects objects like screens, keyboards, and mice, assesses the support status of your back based on pose estimation, and estimates the distance from your face to the nearest screen.
+This application employs cutting-edge computer vision and deep learning models to evaluate workspace images. It identifies objects such as screens, keyboards, and mice, assesses back support based on user posture, and estimates the distance from the user’s face to the nearest screen.
 
 ## Features
 
-- **Object Detection**: Uses YOLOv5 to identify screens, laptops, keyboards, and mice in the uploaded image.
-- **Back Support Analysis**: Utilizes MediaPipe for pose estimation to determine whether your back is properly supported while working.
-- **Distance Estimation**: Estimates the distance from your face to the nearest screen to promote ergonomic practices.
-- **Image Captioning**: Generates a description of the uploaded image using the BLIP model.
-- **Visual Question Answering**: Allows users to ask questions about the image using the ViLT model.
+- **Object Detection**: Detects screens, laptops, keyboards, and mice in uploaded images using YOLOv5.
+- **Back Support Analysis**: Analyzes posture with MediaPipe to evaluate if your back is adequately supported while working.
+- **Distance Estimation**: Estimates the distance from your face to the nearest screen to encourage ergonomic practices.
+- **Image Captioning**: Generates a descriptive caption for the uploaded image using the BLIP model.
+- **Visual Question Answering**: Enables users to ask questions about the image with the ViLT model.
 
 ## Requirements
 
+To run the application, you need the following Python packages:
+
+```plaintext
 streamlit
 Pillow
 torch
@@ -28,5 +32,3 @@ pandas
 transformers
 ultralytics
 yolov5 @ git+https://github.com/ultralytics/yolov5.git
-
-
