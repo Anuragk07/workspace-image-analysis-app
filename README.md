@@ -17,14 +17,16 @@ This application utilizes advanced computer vision techniques and deep learning 
 
 ## Requirements
 
-- Python 3.x
-- Streamlit
-- Pillow
-- Torch
-- OpenCV
-- MediaPipe
-- NumPy
-- Pandas
-- Transformers
+streamlit
+Pillow
+torch
+torchvision
+opencv-python
+mediapipe
+numpy
+pandas
+transformers
+ultralytics
+yolov5 @ git+https://github.com/ultralytics/yolov5.git
 
 
