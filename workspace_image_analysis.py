@@ -1,4 +1,3 @@
-
 import streamlit as st
 from PIL import Image
 from transformers import BlipProcessor, BlipForConditionalGeneration, ViltProcessor, ViltForQuestionAnswering
@@ -83,78 +82,89 @@ st.write("Upload an image of your workspace to get an accurate analysis of objec
 uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Display uploaded image
-    st.image(uploaded_file, use_column_width=True)
-
     # Open the image
     image = Image.open(uploaded_file).convert("RGB")
+    
+    # Resize image to a maximum size (e.g., 400x400)
+    max_size = (400, 400)
+    image.thumbnail(max_size)
+
+    # Create columns for image and output
+    col1, col2 = st.columns(2)
+
+    # Display uploaded image in the left column
+    with col1:
+        st.image(image, use_column_width=True)
+
     img_cv = np.array(image)
 
     # Object detection using YOLOv5 to detect workstation objects
     st.write("🔍 Detecting objects in the workspace...")
     workstation_objects = detect_workstation_objects_yolo(img_cv)
 
-    # Display object counts in a visually appealing table
-    st.write("### Detected Objects:")
-    object_df = pd.DataFrame(list(workstation_objects.items()), columns=["Object", "Count"])
-    st.table(object_df.style.set_table_attributes('style="width: 100%; border-collapse: collapse;"').set_properties(**{
-        'border': '1px solid black',
-        'text-align': 'center',
-        'padding': '10px'
-    }))
+    # Display output in the right column
+    with col2:
+        # Display object counts in a visually appealing table
+        st.write("### Detected Objects:")
+        object_df = pd.DataFrame(list(workstation_objects.items()), columns=["Object", "Count"])
+        st.table(object_df.style.set_table_attributes('style="width: 100%; border-collapse: collapse;"').set_properties(**{
+            'border': '1px solid black',
+            'text-align': 'center',
+            'padding': '10px'
+        }))
 
-    # Pose estimation for back support analysis
-    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-    results = pose.process(img_rgb)
-    image_height, image_width, _ = img_rgb.shape
+        # Pose estimation for back support analysis
+        img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+        results = pose.process(img_rgb)
+        image_height, image_width, _ = img_rgb.shape
 
-    if results.pose_landmarks:
-        landmarks = results.pose_landmarks.landmark
+        if results.pose_landmarks:
+            landmarks = results.pose_landmarks.landmark
+            
+            # Back support analysis
+            support_status = determine_back_support(landmarks, image_height)
+            st.write("### Back Support Analysis:")
+            for part, status in support_status.items():
+                st.write(f"**{part}:** {status}")
+
+            # Calculate distance from the face to the nearest screen
+            nose = landmarks[mp_pose.PoseLandmark.NOSE.value]
+            nose_x = int(nose.x * image_width)
+            nose_y = int(nose.y * image_height)
+
+            if workstation_objects["Screens and Laptops"] > 0:
+                # Dummy distance calculation logic
+                min_distance = 60  # Replace with actual logic
+                distance_category = (
+                    "Less than one arm's length" if min_distance < 60 
+                    else "One arm's length" if 60 <= min_distance <= 70 
+                    else "More than one arm's length"
+                )
+                st.success(f"Estimated Distance from Face to Nearest Screen: **({distance_category})**")
+            else:
+                st.error("🚫 No screens or laptops detected in the image.")
         
-        # Back support analysis
-        support_status = determine_back_support(landmarks, image_height)
-        st.write("### Back Support Analysis:")
-        for part, status in support_status.items():
-            st.write(f"**{part}:** {status}")
+        # Image captioning using BLIP
+        st.write("🖼️ Generating Image Description...")
+        blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+        inputs = blip_processor(image, return_tensors="pt")
+        output = blip_model.generate(**inputs)
+        caption = blip_processor.decode(output[0], skip_special_tokens=True)
+        st.success("**Generated Image Description:** " + caption)
 
-        # Calculate distance from the face to the nearest screen
-        nose = landmarks[mp_pose.PoseLandmark.NOSE.value]
-        nose_x = int(nose.x * image_width)
-        nose_y = int(nose.y * image_height)
+        # Question input for Visual Question Answering (ViLT)
+        st.write("❓ Ask a question about the image:")
+        question = st.text_input("Type your question here...")
 
-        if workstation_objects["Screens and Laptops"] > 0:
-            # Dummy distance calculation logic
-            min_distance = 60  # Replace with actual logic
-            distance_category = (
-                "Less than one arm's length" if min_distance < 60 
-                else "One arm's length" if 60 <= min_distance <= 70 
-                else "More than one arm's length"
-            )
-            st.success(f"Estimated Distance from Face to Nearest Screen: **({distance_category})**")
-        else:
-            st.error("🚫 No screens or laptops detected in the image.")
-    
-    # Image captioning using BLIP
-    st.write("🖼️ Generating Image Description...")
-    blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-    blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-    inputs = blip_processor(image, return_tensors="pt")
-    output = blip_model.generate(**inputs)
-    caption = blip_processor.decode(output[0], skip_special_tokens=True)
-    st.success("**Generated Image Description:** " + caption)
+        if question:
+            vilt_processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
+            vilt_model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
+            vilt_inputs = vilt_processor(image, question, return_tensors="pt")
+            with torch.no_grad():
+                outputs = vilt_model(**vilt_inputs)
+                logits = outputs.logits
+                answer_idx = logits.argmax(-1).item()
+                answer = vilt_model.config.id2label[answer_idx]
 
-    # Question input for Visual Question Answering (ViLT)
-    st.write("❓ Ask a question about the image:")
-    question = st.text_input("Type your question here...")
-
-    if question:
-        vilt_processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
-        vilt_model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
-        vilt_inputs = vilt_processor(image, question, return_tensors="pt")
-        with torch.no_grad():
-            outputs = vilt_model(**vilt_inputs)
-            logits = outputs.logits
-            answer_idx = logits.argmax(-1).item()
-            answer = vilt_model.config.id2label[answer_idx]
-
-        st.success("**Answer:** " + answer)
+            st.success("**Answer:** " + answer)
