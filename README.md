@@ -2,7 +2,8 @@
 
 🏢 A Streamlit web application designed to analyze workspace images. This application leverages advanced computer vision techniques, utilizing YOLOv5 for object detection, MediaPipe for pose estimation, and transformer models for image captioning and visual question answering. Users can upload images of their workspaces to receive valuable insights on object counts, back support status, and estimated distances to screens.
 
-![Workspace Image Analysis Screenshot](https://github.com/user-attachments/assets/032930e9-e6d4-43e3-8ffc-a33e04c40c31)
+<img width="1440" alt="Screenshot 2024-10-12 at 12 15 51 PM" src="https://github.com/user-attachments/assets/940195ed-902f-4d1f-8209-230a787531c3">
+
 
 ## Overview
 
